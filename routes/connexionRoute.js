@@ -1,9 +1,8 @@
 const express = require('express')
 const router = express.Router()
-
-const cltrRole = require('../controllers/roleCtrl')
+const connexionCtrl = require('../controllers/connexionCtrl')
 const auth = require('../services/auth')
 
-router.get('/all/', auth, cltrRole.allRoles)
+router.get('/all/',auth, connexionCtrl.allConnexion)
 
 module.exports = router

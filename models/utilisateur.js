@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         IsTempPin: {
             type: DataTypes.BOOLEAN,
-            defaultValues: false
+            defaultValue: false
         },
         Roles: {
             type: DataTypes.STRING,
@@ -50,6 +50,9 @@ module.exports = (sequelize, DataTypes) => {
                 notEmpty: { msg: `Erreur: caractère vide on autorisé pour le nom complet.`},
                 notNull: { msg: `Le nom complet est requis`}
             }
+        },
+        IdTitulaire: {
+            type: DataTypes.STRING(10),
         },
         Statut: {
           type: DataTypes.BOOLEAN,

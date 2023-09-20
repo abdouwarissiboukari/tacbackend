@@ -1,4 +1,4 @@
-const { User, Op } = require('../databases/sequelize')
+const { User, Op, Connexion, sequelize, QueryTypes } = require('../databases/sequelize')
 const { getDigitalCode } = require('../helpers')
 const bcryptSalt = process.env.BCRYPT_SALT
 const jwtSecret = process.env.JWT_SECRET
@@ -31,12 +31,16 @@ exports.createUser = async (req, res, next) => {
       })    
   }
   catch (error) {
-    return res.status(400).json({ error })
+    return res.status(400).json({ 
+      message : `Un problème est survenu lors de la connexion, veuillez réessayer plus tard...`,
+      Error : error.message
+     })
   }
 }
 
 exports.connect = async (req, res, next) => {
   try {
+
 
     if(!req.body.username || req.body.username.len === 0){
       return res.status(400).json({ message : `Veuillez renseigner un Username valide`})
@@ -59,17 +63,42 @@ exports.connect = async (req, res, next) => {
         }
 
         bcrypt.compare(req.body.codepin, user.CodePin)
-          .then(isValid => {
+          .then(async (isValid) => {
             if(!isValid){
               return res.status(401).json({message: `Les informstions de connexions sont incorrectes`})
             }
+
+            const todayDate = new Date().toISOString().slice(0, 10)
+            const todayTime = new Date().toLocaleTimeString()
+
+            await Connexion.create({
+              UserLogin: user.UserLogin,
+              Role: user.Roles,
+              Action: 'Connexion',
+              DateAction: todayDate,
+              HeureAction: todayTime
+            })
+
+            const getZoneObject = await sequelize.query(
+              `SELECT ZoneA FROM affectation WHERE Etat=b'1' AND Titulaire = :Titulaire`,
+              {
+                replacements: { Titulaire: `${user.IdTitulaire}` },
+                type: QueryTypes.SELECT
+              }
+            )
+            
+
+
             res.status(200).json({
               Username: user.UserLogin,
               FullName: user.FullName,
               Roles: user.Roles,
+              Titulaire: user.IdTitulaire,
+              Zone: getZoneObject[0].ZoneA,
               IsTempPin: user.IsTempPin,
+              CodeInit: codeInit,
               Token: jwt.sign(
-                {Usernam: user.UserLogin},
+                {Username: user.UserLogin},
                 jwtSecret,
                 { expiresIn: '24h' }
               )
